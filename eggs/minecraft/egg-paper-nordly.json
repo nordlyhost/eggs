@@ -31,14 +31,14 @@
         "Default": "java -Xms128M -XX:MaxRAMPercentage=95.0 -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}"
     },
     "config": {
-        "files": "{\n    \"server.properties\": {\n        \"parser\": \"properties\",\n        \"find\": {\n            \"server-ip\": \"\",\n            \"server-port\": \"{{server.allocations.default.port}}\",\n            \"query.port\": \"{{server.allocations.default.port}}\"\n        }\n    }\n}",
+        "files": "{\n    \"server.properties\": {\n        \"parser\": \"properties\",\n        \"find\": {\n            \"server-ip\": \"\",\n            \"server-port\": \"{{server.allocations.default.port}}\",\n            \"query.port\": \"{{server.allocations.default.port}}\",\n            \"motd\": \"{{server.build.env.MOTD}}\",\n            \"white-list\": \"{{server.build.env.WHITELIST}}\",\n            \"enforce-whitelist\": \"{{server.build.env.WHITELIST}}\",\n            \"online-mode\": \"{{server.build.env.ONLINE_MODE}}\",\n            \"difficulty\": \"{{server.build.env.DIFFICULTY}}\",\n            \"gamemode\": \"{{server.build.env.GAMEMODE}}\",\n            \"max-players\": \"{{server.build.env.MAX_PLAYERS}}\",\n            \"pvp\": \"{{server.build.env.PVP}}\",\n            \"view-distance\": \"{{server.build.env.VIEW_DISTANCE}}\",\n            \"spawn-protection\": \"{{server.build.env.SPAWN_PROTECTION}}\"\n        }\n    }\n}",
         "startup": "{\n    \"done\": \")! For help, type \"\n}",
         "logs": "[]",
         "stop": "stop"
     },
     "scripts": {
         "installation": {
-            "script": "#!/bin/ash\n# Paper Installation Script\n#\n# Server Files: /mnt/server\nPROJECT=paper\n\nif [ -n \"${DL_PATH}\" ]; then\n\techo -e \"Using supplied download url: ${DL_PATH}\"\n\tDOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's/{{/${/g' -e 's/}}/}/g')`\nelse\n\tVER_EXISTS=`curl -s https://fill.papermc.io/v3/projects/${PROJECT} | jq -r --arg VERSION $MINECRAFT_VERSION '.versions | any(.[]; index($VERSION))' | grep -m1 true`\n\tLATEST_VERSION=`curl -s https://fill.papermc.io/v3/projects/${PROJECT} | jq -r '.versions | to_entries | .[0].value[0]'`\n\n\tif [ \"${VER_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Version is valid. Using version ${MINECRAFT_VERSION}\"\n\telse\n\t\techo -e \"Specified version not found. Defaulting to the latest ${PROJECT} version\"\n\t\tMINECRAFT_VERSION=${LATEST_VERSION}\n\tfi\n\n\tBUILD_EXISTS=`curl -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r --arg BUILD ${BUILD_NUMBER} '.builds[] | tostring | contains($BUILD)' | grep -m1 true`\n\tLATEST_BUILD=`curl -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds' | jq -r '.[0]'`\n\n\tif [ \"${BUILD_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Build is valid for version ${MINECRAFT_VERSION}. Using build ${BUILD_NUMBER}\"\n\telse\n\t\techo -e \"Using the latest ${PROJECT} build for version ${MINECRAFT_VERSION}\"\n\t\tBUILD_NUMBER=${LATEST_BUILD}\n\tfi\n\n\techo \"Version being downloaded\"\n\techo -e \"Project: ${PROJECT}\"\n\techo -e \"MC Version: ${MINECRAFT_VERSION}\"\n\techo -e \"Build: ${BUILD_NUMBER}\"\n\tDOWNLOAD_URL=`curl -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER} | jq -r '.downloads.\"server:default\".url'`\nfi\n\ncd /mnt/server\n\necho -e \"Running curl -o ${SERVER_JARFILE} ${DOWNLOAD_URL}\"\n\nif [ -f ${SERVER_JARFILE} ]; then\n\tmv ${SERVER_JARFILE} ${SERVER_JARFILE}.old\nfi\n\ncurl -o ${SERVER_JARFILE} ${DOWNLOAD_URL}\n\nif [ ! -f server.properties ]; then\n    echo -e \"Downloading MC server.properties\"\n    curl -o server.properties https://raw.githubusercontent.com/pelican-eggs/minecraft/refs/heads/main/java/server.properties\nfi",
+            "script": "#!/bin/ash\n# Paper Installation Script\n#\n# Server Files: /mnt/server\nPROJECT=paper\n\nif [ -n \"${DL_PATH}\" ]; then\n\techo -e \"Using supplied download url: ${DL_PATH}\"\n\tDOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's/{{/${/g' -e 's/}}/}/g')`\nelse\n\tVER_EXISTS=`curl -s https://fill.papermc.io/v3/projects/${PROJECT} | jq -r --arg VERSION $MINECRAFT_VERSION '.versions | any(.[]; index($VERSION))' | grep -m1 true`\n\tLATEST_VERSION=`curl -s https://fill.papermc.io/v3/projects/${PROJECT} | jq -r '.versions | to_entries | .[0].value[0]'`\n\n\tif [ \"${VER_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Version is valid. Using version ${MINECRAFT_VERSION}\"\n\telse\n\t\techo -e \"Specified version not found. Defaulting to the latest ${PROJECT} version\"\n\t\tMINECRAFT_VERSION=${LATEST_VERSION}\n\tfi\n\n\tBUILD_EXISTS=`curl -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r --arg BUILD ${BUILD_NUMBER} '.builds[] | tostring | contains($BUILD)' | grep -m1 true`\n\tLATEST_BUILD=`curl -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds' | jq -r '.[0]'`\n\n\tif [ \"${BUILD_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Build is valid for version ${MINECRAFT_VERSION}. Using build ${BUILD_NUMBER}\"\n\telse\n\t\techo -e \"Using the latest ${PROJECT} build for version ${MINECRAFT_VERSION}\"\n\t\tBUILD_NUMBER=${LATEST_BUILD}\n\tfi\n\n\techo \"Version being downloaded\"\n\techo -e \"Project: ${PROJECT}\"\n\techo -e \"MC Version: ${MINECRAFT_VERSION}\"\n\techo -e \"Build: ${BUILD_NUMBER}\"\n\tDOWNLOAD_URL=`curl -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER} | jq -r '.downloads.\"server:default\".url'`\nfi\n\ncd /mnt/server\n\necho -e \"Running curl -o ${SERVER_JARFILE} ${DOWNLOAD_URL}\"\n\nif [ -f ${SERVER_JARFILE} ]; then\n\tmv ${SERVER_JARFILE} ${SERVER_JARFILE}.old\nfi\n\ncurl -o ${SERVER_JARFILE} ${DOWNLOAD_URL}\n\nif [ ! -f server.properties ]; then\n    echo -e \"Downloading MC server.properties\"\n    curl -o server.properties https://raw.githubusercontent.com/pelican-eggs/minecraft/refs/heads/main/java/server.properties\nfi\n\n# === NORDLY INSTALL ADDITION ===\n# Drop a Nordly welcome file for new customers.\ncat > /mnt/server/NORDLY-WELCOME.md <<'WELCOME_EOF'\n# Welcome to your Nordly-hosted Minecraft server\n\nYour server is now running on **nordly.gg** infrastructure.\n\n## Security defaults applied\nYour server starts with these Nordly-recommended defaults:\n\n- **Whitelist enabled** — only invited players can join\n- **Online mode enabled** — premium Minecraft accounts required\n- **Spawn protection** — 16 blocks around spawn protected\n\nThese keep your server private and prevent random players from joining.\nAdjust them anytime in the Startup tab of your Nordly panel.\n\n## Add players to the whitelist\n1. Start your server\n2. Open the Console tab in your Nordly panel\n3. Type: `whitelist add <YourMinecraftUsername>`\n4. Repeat for each friend\n\n## Make your server public\nIf you want anyone to join:\n1. Go to the Startup tab\n2. Set \"Enable Whitelist\" to false\n3. Restart your server\n\n## Need help?\n- Email: hi@nordly.gg\n- Docs: https://nordly.gg/docs\n\nWelcome to the Nordly community.\nWELCOME_EOF\necho -e \"Nordly welcome file deployed to /mnt/server/NORDLY-WELCOME.md\"\n# === END NORDLY INSTALL ADDITION ===\n",
             "container": "ghcr.io/pelican-eggs/installers:alpine",
             "entrypoint": "ash"
         }
@@ -97,6 +97,135 @@
                 "regex:/^([\\w\\d._-]+)(\\.jar)$/"
             ],
             "sort": 2
+        },
+        {
+            "name": "Server MOTD",
+            "description": "The message of the day shown in the Minecraft server list. Supports Minecraft color codes (§a green, §c red, §l bold, §r reset).",
+            "env_variable": "MOTD",
+            "default_value": "§a§lHosted by Nordly §r§7· §fnordly.gg",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:200"
+            ],
+            "sort": 10
+        },
+        {
+            "name": "Enable Whitelist",
+            "description": "When enabled, only players in the whitelist can join. Add players in the Console tab: /whitelist add <username>. Nordly default: enabled for new server security.",
+            "env_variable": "WHITELIST",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "in:true,false"
+            ],
+            "sort": 11
+        },
+        {
+            "name": "Online Mode",
+            "description": "Require premium (paid) Minecraft accounts. Strongly recommended on. Disabling allows cracked/pirated clients but enables account spoofing attacks.",
+            "env_variable": "ONLINE_MODE",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "in:true,false"
+            ],
+            "sort": 12
+        },
+        {
+            "name": "Difficulty",
+            "description": "World difficulty level.",
+            "env_variable": "DIFFICULTY",
+            "default_value": "easy",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "in:peaceful,easy,normal,hard"
+            ],
+            "sort": 13
+        },
+        {
+            "name": "Game Mode",
+            "description": "Default game mode for new players.",
+            "env_variable": "GAMEMODE",
+            "default_value": "survival",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "in:survival,creative,adventure,spectator"
+            ],
+            "sort": 14
+        },
+        {
+            "name": "Max Players",
+            "description": "Maximum concurrent players. Set based on your plan's slot allocation.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "20",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "integer",
+                "min:1",
+                "max:200"
+            ],
+            "sort": 15
+        },
+        {
+            "name": "PvP",
+            "description": "Allow player vs player combat.",
+            "env_variable": "PVP",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "in:true,false"
+            ],
+            "sort": 16
+        },
+        {
+            "name": "View Distance",
+            "description": "Render distance in chunks. Higher = more visible terrain but more server load. Recommended: 8-12 for shared, 12-16 for dedicated.",
+            "env_variable": "VIEW_DISTANCE",
+            "default_value": "10",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "integer",
+                "min:3",
+                "max:32"
+            ],
+            "sort": 17
+        },
+        {
+            "name": "Spawn Protection",
+            "description": "Radius in blocks around spawn where only operators can build. Set to 0 to disable.",
+            "env_variable": "SPAWN_PROTECTION",
+            "default_value": "16",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "integer",
+                "min:0",
+                "max:100"
+            ],
+            "sort": 18
         }
     ]
 }
