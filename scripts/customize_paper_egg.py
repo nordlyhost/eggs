@@ -34,76 +34,76 @@ NORDLY_VARS = [
     },
     {
         "name": "Enable Whitelist",
-        "description": "When enabled, only players in the whitelist can join. "
+        "description": "Only players in the whitelist can join when enabled. "
                        "Add players in the Console tab: /whitelist add <username>. "
-                       "Nordly default: enabled for new server security.",
+                       "Valid values: true or false. Nordly default: true (recommended for new server security).",
         "env_variable": "WHITELIST",
         "default_value": "true",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "string", "in:true,false"],
+        "rules": ["required", "string"],
         "sort": 11,
     },
     {
         "name": "Online Mode",
         "description": "Require premium (paid) Minecraft accounts. "
-                       "Strongly recommended on. Disabling allows cracked/pirated clients but enables account spoofing attacks.",
+                       "Valid values: true or false. Strongly recommended on. Disabling allows cracked clients but enables account spoofing attacks.",
         "env_variable": "ONLINE_MODE",
         "default_value": "true",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "string", "in:true,false"],
+        "rules": ["required", "string"],
         "sort": 12,
     },
     {
         "name": "Difficulty",
-        "description": "World difficulty level.",
+        "description": "World difficulty level. Valid values: peaceful, easy, normal, hard.",
         "env_variable": "DIFFICULTY",
         "default_value": "easy",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "string", "in:peaceful,easy,normal,hard"],
+        "rules": ["required", "string"],
         "sort": 13,
     },
     {
         "name": "Game Mode",
-        "description": "Default game mode for new players.",
+        "description": "Default game mode for new players. Valid values: survival, creative, adventure, spectator.",
         "env_variable": "GAMEMODE",
         "default_value": "survival",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "string", "in:survival,creative,adventure,spectator"],
+        "rules": ["required", "string"],
         "sort": 14,
     },
     {
         "name": "Max Players",
-        "description": "Maximum concurrent players. Set based on your plan's slot allocation.",
+        "description": "Maximum concurrent players. Set based on your plan's slot allocation. Numeric value, 1-200 recommended.",
         "env_variable": "MAX_PLAYERS",
         "default_value": "20",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "integer", "min:1", "max:200"],
+        "rules": ["required", "string"],
         "sort": 15,
     },
     {
         "name": "PvP",
-        "description": "Allow player vs player combat.",
+        "description": "Allow player vs player combat. Valid values: true or false.",
         "env_variable": "PVP",
         "default_value": "true",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "string", "in:true,false"],
+        "rules": ["required", "string"],
         "sort": 16,
     },
     {
         "name": "View Distance",
         "description": "Render distance in chunks. Higher = more visible terrain but more server load. "
-                       "Recommended: 8-12 for shared, 12-16 for dedicated.",
+                       "Recommended: 8-12 for shared, 12-16 for dedicated. Engine max is 32.",
         "env_variable": "VIEW_DISTANCE",
         "default_value": "10",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "integer", "min:3", "max:32"],
+        "rules": ["required", "string"],
         "sort": 17,
     },
     {
@@ -113,7 +113,7 @@ NORDLY_VARS = [
         "default_value": "16",
         "user_viewable": True,
         "user_editable": True,
-        "rules": ["required", "integer", "min:0", "max:100"],
+        "rules": ["required", "string"],
         "sort": 18,
     },
 ]
@@ -251,11 +251,30 @@ def main() -> int:
     install["script"] = extend_install_script(install["script"])
     print(f"Install script: {len(install['script'])} chars")
 
-    # 4. Validate JSON serialization
+    # 4. Pelican beta34 inconsistency workaround:
+    #    - The egg IMPORTER expects key `startup` (string command).
+    #    - The server-creation FORM (Filament keyValueFormComponent) expects
+    #      key `startup_commands` as an ARRAY of {key, value} pairs.
+    #    Include both so both code paths work.
+    if "startup" in egg and "startup_commands" not in egg:
+        startup_val = egg["startup"]
+        # If `startup` is an object like {"Default": "java ..."}, convert to array
+        # of {key, value} pairs for the form. If it's a string, wrap into one entry.
+        if isinstance(startup_val, dict):
+            egg["startup_commands"] = [
+                {"key": k, "value": v} for k, v in startup_val.items()
+            ]
+        elif isinstance(startup_val, str):
+            egg["startup_commands"] = [{"key": "Default", "value": startup_val}]
+        else:
+            egg["startup_commands"] = []
+        print(f"Added startup_commands: {len(egg['startup_commands'])} entries")
+
+    # 5. Validate JSON serialization
     output = json.dumps(egg, indent=4, ensure_ascii=False)
     json.loads(output)  # round-trip check
 
-    # 5. Write output
+    # 6. Write output
     with OUTPUT.open("w") as f:
         f.write(output)
     print(f"\nWrote: {OUTPUT}")

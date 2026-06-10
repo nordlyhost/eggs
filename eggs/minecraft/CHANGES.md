@@ -47,3 +47,36 @@ This document records what differs between Nordly's Minecraft eggs and their ups
 4. Test on a fresh server before deploying
 5. Update version tag and CHANGELOG.md
 6. Commit the new JSON file
+
+
+## Important: deployment method
+
+This egg's customizations were applied via Pelican admin UI, NOT via JSON import.
+
+The exported JSON file in this directory is a record of the working state, intended for:
+- Reference / diff against future versions
+- Documentation of what's been customized
+- Re-application via UI to a fresh Pelican install (manual)
+
+**Do NOT attempt to re-import this JSON into a Pelican panel** — Pelican beta34 has multiple import-side bugs we documented in the v1.0.0 release notes that prevent clean re-import.
+
+## v1.0.0 known issues / gotchas
+
+During development we hit these Pelican beta34 bugs:
+1. Export uses `startup_commands` key but importer expects `startup` (rename on import)
+2. Validation rules with `|` characters in regex break form rendering
+3. Pipe-separated rule strings fail validation (`Method validateNullable|string does not exist`)
+4. The placeholder `{{server.build.env.X}}` does NOT work — must use `{{server.environment.X}}`
+5. Some Filament `OptionStateCast` errors when array-formatted rules contain regex with alternation
+
+When upstream Paper egg gets significant updates and we need to re-fork, the process is:
+1. Import fresh upstream Paper egg as a new egg (stock, untouched)
+2. Manually re-apply each customization via the admin UI (variables, config files, install script)
+3. Export the result
+4. Diff against this file to verify customizations match
+5. Replace this file with the new export, tag new major version
+
+Documented customizations:
+- 9 new variables (see Variables section of admin UI for the egg)
+- Extended Configuration Files JSON (server.properties parser rules)
+- Install script appended with NORDLY-WELCOME.md generator (marked with === comments)
