@@ -36,6 +36,9 @@ This document records what differs between Nordly's Minecraft eggs and their ups
    - Creates `/mnt/server/NORDLY-WELCOME.md` with onboarding instructions
    - Applies secure defaults if `server.properties` doesn't exist
 
+### Schema fixes (Pelican beta34 export-import mismatch)
+- Renamed `startup_commands` → `startup` (Pelican beta34 exports with the former, importer expects the latter)
+
 ### To update from upstream
 
 1. Re-export upstream Paper egg from latest pelican-eggs/eggs
